@@ -34,14 +34,14 @@ $$\mathbf{\text{Training Hours} = \frac{\text{Total Tokens}}{B \cdot S} \times T
 ### 3. Parameter & FLOPs Calculations
 
 - **Active Parameters ($N_{\text{act}}$)**: Parameters evaluated per token:
-  $$N_{\text{act}} = V \cdot d + L \cdot \left(4d^2 + 3d \cdot d_{\text{expert}} \cdot \frac{k}{g} + 3d \cdot \text{shared\_hidden} + d \cdot E \cdot g + 2d\right) + d$$
+  $$N_{\text{act}} = V \cdot d + L \cdot \left(4d^2 + 3d \cdot d_{\text{expert}} \cdot \frac{k}{g} + 3d \cdot d_{\text{shared}} + d \cdot E \cdot g + 2d\right) + d$$
 
 - **Total Parameters ($N_{\text{total}}$)**: All allocated weights in memory:
-  $$N_{\text{total}} = V \cdot d + L \cdot \left(4d^2 + 3d \cdot d_{\text{expert}} \cdot E + 3d \cdot \text{shared\_hidden} + d \cdot E \cdot g + 2d\right) + d$$
+  $$N_{\text{total}} = V \cdot d + L \cdot \left(4d^2 + 3d \cdot d_{\text{expert}} \cdot E + 3d \cdot d_{\text{shared}} + d \cdot E \cdot g + 2d\right) + d$$
 
 - **Approximate Training FLOPs per Token ($F$)**:
   $$F = 6 \cdot N_{\text{act}} + 6 \cdot L \cdot S \cdot d$$
-  *(Includes standard forward + backward multiplier of $\approx 6 \times \text{params}$ plus self-attention projection FLOPs).*
+  *(Includes standard forward + backward multiplier of $\approx 6 \times \text{params}$ plus self-attention projection FLOPs. $d_{\text{shared}}$ denotes `SHARED_HIDDEN`, the hidden dimension for an optional shared expert).*
 
 ---
 
@@ -223,7 +223,7 @@ Both scripts contain a configuration section at the top of the file:
 
 ## Interpreting the Metrics
 
-- **Tokens/sec**: Total tokens processed per second ($\frac{\text{batch} \times \text{seq}}{\text{step\_time}}$).
+- **Tokens/sec**: Total tokens processed per second ($\frac{B \cdot S}{T_{\text{step}}}$).
 - **Dormant Pieces**: The average number of sub-experts receiving $0$ tokens in a step. High dormant count indicates underutilized expert capacity or router collapse.
 - **Biggest-Piece Share**: Fraction of routed tokens received by the most popular sub-expert. Compare this to the uniform distribution baseline ($1 / (E \times g)$).
 - **$R$ (TFLOP/s)**: Effective compute throughput extracted by NNLS. Values close to hardware limits indicate efficient GPU tensor core utilization.
